@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Fragments.UploadsFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/img_temp"
+                android:id="@+id/img_watermark"
+                android:layout_marginBottom="16dp"
+                />
+
+            <Button
+                android:layout_width="150dp"
+                android:layout_height="32dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="280dp"
+                android:background="@drawable/btn_bg"
+                android:text="Choose Image"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:drawableStart="@drawable/ic_camers"
+                android:paddingStart="8dp"
+                android:id="@+id/btn_choose_image"
+                />
+
+        </RelativeLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Watermark Text"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
+            >
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/txt_watermark"
+                >
+
+            </com.google.android.material.textfield.TextInputEditText>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="36dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/btn_bg"
+            android:text="Save"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:id="@+id/btn_save"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            />
+
+    </LinearLayout>
+
+</ScrollView>

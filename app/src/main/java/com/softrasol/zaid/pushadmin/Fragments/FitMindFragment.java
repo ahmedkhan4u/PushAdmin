@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.softrasol.zaid.pushadmin.MeditationActivity;
+import com.softrasol.zaid.pushadmin.MindsetActivity;
 import com.softrasol.zaid.pushadmin.MotivationActivity;
 import com.softrasol.zaid.pushadmin.R;
 import com.softrasol.zaid.pushadmin.UploadBreathOutDataActivity;
@@ -26,7 +28,7 @@ public class FitMindFragment extends Fragment {
     }
 
     private View mView;
-    private RelativeLayout mBreathout, mMotivation;
+    private RelativeLayout mBreathout, mMotivation, mMindset, mMeditation;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -38,8 +40,28 @@ public class FitMindFragment extends Fragment {
 
         breathoutClick();
         motivationClick();
+        mindsetClick();
+        meditationClick();
 
         return mView;
+    }
+
+    private void meditationClick() {
+        mMeditation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), MeditationActivity.class));
+            }
+        });
+    }
+
+    private void mindsetClick() {
+        mMindset.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), MindsetActivity.class));
+            }
+        });
     }
 
     private void motivationClick() {
@@ -65,6 +87,8 @@ public class FitMindFragment extends Fragment {
     private void widgetsInitailization() {
         mBreathout = mView.findViewById(R.id.fitmind_breathwork);
         mMotivation = mView.findViewById(R.id.fitmind_motivation);
+        mMindset = mView.findViewById(R.id.fitmind_mindset);
+        mMeditation = mView.findViewById(R.id.fitmind_meditation);
     }
 
 }

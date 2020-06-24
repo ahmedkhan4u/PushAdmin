@@ -2,7 +2,6 @@ package com.softrasol.zaid.pushadmin.Helper;
 
 import android.net.Uri;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -18,27 +17,28 @@ import com.google.firebase.storage.UploadTask;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class UploadVideoData {
+public class UploadMeditationData {
 
     static boolean status = false;
     static String downloadUrl;
-    public static boolean uploadVideoData(String documentName, String storageName, String videoUrl, final String title,
-                                          final List<PointsModel> list){
+
+    public static boolean uploadMeditationData(final String title, final String description, final String audioUri
+    , String documentName){
+
 
         final CollectionReference collectionReference =
-                FirebaseFirestore.getInstance().collection("videos");
+                FirebaseFirestore.getInstance().collection("meditation");
 
         final DocumentReference documentReference = collectionReference.document(documentName);
 
 
 
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference().child("videos");
+        final StorageReference storageRef = FirebaseStorage.getInstance().getReference().child("audio");
 
-        final StorageReference ref = storageRef.child(storageName);
-        UploadTask uploadTask = ref.putFile(Uri.parse(videoUrl));
+        final StorageReference ref = storageRef.child("meditation");
+        UploadTask uploadTask = ref.putFile(Uri.parse(audioUri));
 
         Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
             @Override
@@ -54,41 +54,17 @@ public class UploadVideoData {
             @Override
             public void onComplete(@NonNull Task<Uri> task) {
                 if (task.isSuccessful()) {
-                     downloadUrl = task.getResult().toString();
-                    Log.d("dxdiag", "Video Uploaded");
 
                     Map map = new HashMap();
-                    map.put("video_url", downloadUrl);
                     map.put("title", title);
+                    map.put("description", description);
+                    map.put("audio_url", audioUri);
 
                     documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
                         @Override
                         public void onComplete(@NonNull Task task) {
                             if (task.isSuccessful()){
-
-                                for (int i=0; i<list.size(); i++){
-
-                                    PointsModel model = new PointsModel(list.get(i).getTitle(),
-                                            list.get(i).getSub_title());
-
-                                    CollectionReference collectionReference1 =
-                                            documentReference.collection("points_data");
-
-                                    DocumentReference documentReference1 =
-                                            collectionReference1.document(i+"");
-
-                                    documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()){
-                                                status = true;
-                                            }else {
-                                                status = false;
-                                            }
-                                        }
-                                    });
-
-                                }
+                                status = true;
                             }else {
                                 status = false;
                             }
@@ -97,8 +73,8 @@ public class UploadVideoData {
 
                 } else {
                     // Handle failures
-                    status = false;
                     // ...
+                    status = false;
                 }
             }
         });

@@ -21,6 +21,8 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.softrasol.zaid.pushadmin.Adapters.PointsAdapter;
 import com.softrasol.zaid.pushadmin.Helper.UploadVideoData;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +30,12 @@ import java.util.List;
 public class UploadBreathOutDataActivity extends AppCompatActivity {
 
     VideoView mBreathOutVideo;
-    private Uri videoUri;
+    private Uri videoUri, imageUri;
     private RecyclerView mRecyclerView;
     private List<PointsModel> list = new ArrayList<>();
     private TextInputEditText mTxtTitle;
     private String title;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +80,17 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
 
             }
         }
+
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                imageUri = result.getUri();
+                Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                Exception error = result.getError();
+            }
+        }
+
     }
 
     public void ChooseVideoClick(View view) {
@@ -160,8 +174,13 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
             return;
         }
 
+        if (imageUri == null){
+            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         boolean result = UploadVideoData.uploadVideoData("breath_work","breath_work",
-                videoUri+"", title, list);
+                videoUri+"", imageUri+"", title, list);
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
@@ -171,4 +190,13 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
         }
 
     }
+
+    public void ChooseBgImage(View view) {
+
+        CropImage.activity()
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .setAspectRatio(1,2)
+                .start(UploadBreathOutDataActivity.this);
+    }
+
 }

@@ -8,11 +8,16 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.MediaController;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.softrasol.zaid.pushadmin.Helper.UploadMeditationData;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.IOException;
 
@@ -23,6 +28,11 @@ public class MeditationActivity extends AppCompatActivity {
     boolean status = false;
     private TextInputEditText mTxtTitle, mTxtDescription;
     private String title, description;
+    private Spinner mSpinner;
+    private String category;
+    private Uri imageUri;
+
+    private String []list = {"Choose Category","Wise", "Happiness", "Health"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,9 +41,33 @@ public class MeditationActivity extends AppCompatActivity {
 
         mTxtTitle = findViewById(R.id.txt_meditation_title);
         mTxtDescription = findViewById(R.id.txt_meditation_description);
+        mSpinner = findViewById(R.id.spinner_meditation);
         mediaPlayer = new MediaPlayer();
 
+        implementSpinner();
 
+
+
+    }
+
+    private void implementSpinner() {
+
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item,
+                list);
+
+        mSpinner.setAdapter(adapter);
+
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                category = list[position];
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
     }
 
@@ -59,12 +93,22 @@ public class MeditationActivity extends AppCompatActivity {
             return;
         }
 
+        if (category.equalsIgnoreCase("Choose Category")){
+            Toast.makeText(this, "Kindly choose a category", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (imageUri == null){
+            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         boolean result = UploadMeditationData.uploadMeditationData(title, description,
-                audioUri+"", "meditation");
+                audioUri+"", "meditation",category, imageUri.toString());
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
+            finish();
         }else {
             Toast.makeText(this, "Failure Occurred", Toast.LENGTH_SHORT).show();
         }
@@ -94,6 +138,18 @@ public class MeditationActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             if (requestCode == 1) {
                 audioUri = data.getData();
+                Toast.makeText(this, "Audio Choosed", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                imageUri = result.getUri();
+                Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
+
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                Exception error = result.getError();
             }
         }
     }
@@ -123,6 +179,14 @@ public class MeditationActivity extends AppCompatActivity {
 
         }
 
+    }
+
+    public void ChooseBgImage(View view) {
+
+        CropImage.activity()
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .setAspectRatio(1,2)
+                .start(MeditationActivity.this);
     }
 
     @Override

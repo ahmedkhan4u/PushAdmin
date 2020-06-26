@@ -19,6 +19,8 @@ import com.softrasol.zaid.pushadmin.Adapters.PointsAdapter;
 import com.softrasol.zaid.pushadmin.Helper.UploadMindSetData;
 import com.softrasol.zaid.pushadmin.Helper.UploadVideoData;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,7 @@ public class MindsetActivity extends AppCompatActivity {
     private List<PointsModel> list = new ArrayList<>();
     private TextInputEditText mTxtTitle, mTxtDesription;
     private String title, description;
+    private Uri imageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,13 +132,43 @@ public class MindsetActivity extends AppCompatActivity {
             return;
         }
 
-        boolean result = UploadMindSetData.uploadMindSetData(title, description, "mindset", list);
+        if (imageUri == null){
+            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        boolean result = UploadMindSetData.uploadMindSetData(title, description,
+                "mindset", list, imageUri+"");
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
             finish();
         }else {
             Toast.makeText(this, "Failure Occurred", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    public void ChooseBgImage(View view) {
+
+        CropImage.activity()
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .setAspectRatio(1,2)
+                .start(MindsetActivity.this);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                imageUri = result.getUri();
+                Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
+
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                Exception error = result.getError();
+            }
         }
 
     }

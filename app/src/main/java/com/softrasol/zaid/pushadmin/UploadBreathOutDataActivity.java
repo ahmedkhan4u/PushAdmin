@@ -174,13 +174,9 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
             return;
         }
 
-        if (imageUri == null){
-            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         boolean result = UploadVideoData.uploadVideoData("breath_work","breath_work",
-                videoUri+"", imageUri+"", title, list);
+                videoUri+"", title, list);
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();

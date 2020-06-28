@@ -29,7 +29,7 @@ public class UploadVideoData {
 
     public static boolean uploadVideoData(String documentName,
                                           final String storageName,
-                                          final String videoUrl, final String imageUri,
+                                          final String videoUrl,
                                           final String title,
                                           final List<PointsModel> list){
 
@@ -38,22 +38,11 @@ public class UploadVideoData {
 
         final DocumentReference documentReference = collectionReference.document(documentName);
 
-
-        StorageReference imageStorage = FirebaseStorage.getInstance().getReference()
-                .child("Images");
-        final StorageReference imageRef = imageStorage.child(storageName);
-
-
-
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child("videos");
         final StorageReference ref = storageRef.child(storageName);
 
         final UploadTask uploadTask2 = ref.putFile(Uri.parse(videoUrl));
-
-
-        final UploadTask uploadTask = imageRef.putFile(Uri.parse(imageUri));
-
-        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+        Task<Uri> urlTask = uploadTask2.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
             @Override
             public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
                 if (!task.isSuccessful()) {
@@ -61,83 +50,55 @@ public class UploadVideoData {
                 }
 
                 // Continue with the task to get the download URL
-                return imageRef.getDownloadUrl();
+                return ref.getDownloadUrl();
             }
         }).addOnCompleteListener(new OnCompleteListener<Uri>() {
             @Override
             public void onComplete(@NonNull Task<Uri> task) {
                 if (task.isSuccessful()) {
-                    imageDownloadUrl = task.getResult().toString();
+                    downloadUrl = task.getResult().toString();
+                    Log.d("dxdiag", "Video Uploaded");
 
-
-                    Task<Uri> urlTask = uploadTask2.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                    Map map = new HashMap();
+                    map.put("video_url", downloadUrl);
+                    map.put("title", title);
+                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
                         @Override
-                        public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                            if (!task.isSuccessful()) {
-                                throw task.getException();
-                            }
+                        public void onComplete(@NonNull Task task) {
+                            if (task.isSuccessful()){
 
-                            // Continue with the task to get the download URL
-                            return ref.getDownloadUrl();
-                        }
-                    }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Uri> task) {
-                            if (task.isSuccessful()) {
-                                downloadUrl = task.getResult().toString();
-                                Log.d("dxdiag", "Video Uploaded");
+                                for (int i=0; i<list.size(); i++){
 
-                                Map map = new HashMap();
-                                map.put("video_url", downloadUrl);
-                                map.put("title", title);
-                                map.put("image_url", imageUri);
+                                    PointsModel model = new PointsModel(list.get(i).getTitle(),
+                                            list.get(i).getSub_title());
 
-                                documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
-                                    @Override
-                                    public void onComplete(@NonNull Task task) {
-                                        if (task.isSuccessful()){
+                                    CollectionReference collectionReference1 =
+                                            documentReference.collection("points_data");
 
-                                            for (int i=0; i<list.size(); i++){
+                                    DocumentReference documentReference1 =
+                                            collectionReference1.document(i+"");
 
-                                                PointsModel model = new PointsModel(list.get(i).getTitle(),
-                                                        list.get(i).getSub_title());
-
-                                                CollectionReference collectionReference1 =
-                                                        documentReference.collection("points_data");
-
-                                                DocumentReference documentReference1 =
-                                                        collectionReference1.document(i+"");
-
-                                                documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                    @Override
-                                                    public void onComplete(@NonNull Task<Void> task) {
-                                                        if (task.isSuccessful()){
-                                                            status = true;
-                                                        }else {
-                                                            status = false;
-                                                        }
-                                                    }
-                                                });
-
+                                    documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()){
+                                                status = true;
+                                            }else {
+                                                status = false;
                                             }
-                                        }else {
-                                            status = false;
                                         }
-                                    }
-                                });
+                                    });
 
-                            } else {
-                                // Handle failures
+                                }
+                            }else {
                                 status = false;
-                                // ...
                             }
                         }
                     });
 
-
-
                 } else {
                     // Handle failures
+                    status = false;
                     // ...
                 }
             }

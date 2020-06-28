@@ -169,13 +169,9 @@ public class ChallengesActivity extends AppCompatActivity {
             return;
         }
 
-        if (imageUri == null){
-            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         boolean result = UploadVideoData.uploadVideoData("challenges","challenges",
-                videoUri+"", imageUri+"", title, list);
+                videoUri+"", title, list);
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();

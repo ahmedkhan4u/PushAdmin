@@ -170,13 +170,9 @@ public class MotivationActivity extends AppCompatActivity {
             return;
         }
 
-        if (imageUri == null){
-            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         boolean result = UploadVideoData.uploadVideoData("motivation","motivation",
-                videoUri+"", imageUri+"", title, list);
+                videoUri+"", title, list);
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();

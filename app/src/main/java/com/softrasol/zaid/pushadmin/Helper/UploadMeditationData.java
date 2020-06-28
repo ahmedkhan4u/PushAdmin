@@ -27,7 +27,8 @@ public class UploadMeditationData {
 
 
 
-    public static boolean uploadMeditationData(final String title, final String description, final String audioUri
+    public static boolean uploadMeditationData(final String title, final String description,
+                                               final String audioUri
     , final String documentName, final String category, final String imageUri){
 
 
@@ -38,7 +39,7 @@ public class UploadMeditationData {
 
 
         StorageReference imageStorage = FirebaseStorage.getInstance().getReference()
-                .child("Images");
+                .child("audio");
 
 
         final StorageReference ref = imageStorage.child("meditation_"+category);
@@ -61,12 +62,12 @@ public class UploadMeditationData {
                 if (task.isSuccessful()) {
                     downloadUrl = task.getResult().toString();
 
-                    StorageReference audioStorage = FirebaseStorage.getInstance().getReference()
+                    final StorageReference imageRef = FirebaseStorage.getInstance().getReference()
                             .child("Images");
 
 
-                    final StorageReference ref2 = audioStorage.child("meditation_"+category);
-                    UploadTask uploadTask2 = ref2.putFile(Uri.parse(audioUri));
+                    final StorageReference ref2 = imageRef.child("meditation_"+category);
+                    UploadTask uploadTask2 = ref2.putFile(Uri.parse(imageUri));
 
                     Task<Uri> urlTask = uploadTask2.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
                         @Override
@@ -76,7 +77,7 @@ public class UploadMeditationData {
                             }
 
                             // Continue with the task to get the download URL
-                            return ref.getDownloadUrl();
+                            return ref2.getDownloadUrl();
                         }
                     }).addOnCompleteListener(new OnCompleteListener<Uri>() {
                         @Override
@@ -86,9 +87,9 @@ public class UploadMeditationData {
 
                                 Map map = new HashMap();
                                 map.put("title", title);
-                                map.put("description", title);
+                                map.put("description", description);
                                 map.put("image_url", imgaeDownloadUrl);
-                                map.put("audio_url", audioUri);
+                                map.put("audio_url", downloadUrl);
                                 map.put("category", category);
 
                                 documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
@@ -96,6 +97,9 @@ public class UploadMeditationData {
                                     public void onComplete(@NonNull Task task) {
                                         if (task.isSuccessful()){
                                             status = true;
+                                        }else {
+                                            status = false;
+                                            Log.d("error", "Image Upload Error"+task.getException());
                                         }
                                     }
                                 });
@@ -104,6 +108,7 @@ public class UploadMeditationData {
                             } else {
                                 // Handle failures
                                 // ...
+                                status = false;
                             }
                         }
                     });
@@ -113,6 +118,7 @@ public class UploadMeditationData {
                 } else {
                     // Handle failures
                     // ...
+                    status = false;
                 }
             }
         });

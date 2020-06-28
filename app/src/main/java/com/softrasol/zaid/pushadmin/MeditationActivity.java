@@ -104,7 +104,7 @@ public class MeditationActivity extends AppCompatActivity {
         }
 
         boolean result = UploadMeditationData.uploadMeditationData(title, description,
-                audioUri+"", "meditation",category, imageUri.toString());
+                audioUri+"", category ,category, imageUri+"");
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
@@ -117,6 +117,7 @@ public class MeditationActivity extends AppCompatActivity {
 
     public void BackClick(View view) {
         onBackPressed();
+        mediaPlayer.stop();
     }
 
     public void ChooseAudioClick(View view) {
@@ -135,8 +136,8 @@ public class MeditationActivity extends AppCompatActivity {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            if (requestCode == 1) {
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
                 audioUri = data.getData();
                 Toast.makeText(this, "Audio Choosed", Toast.LENGTH_SHORT).show();
             }
@@ -198,6 +199,18 @@ public class MeditationActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        mediaPlayer.stop();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mediaPlayer.start();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
         mediaPlayer.stop();
     }
 }

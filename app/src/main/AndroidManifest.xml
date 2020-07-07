@@ -12,7 +12,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MeditationActivity"></activity>
+        <activity android:name=".UploadUserNameImageBg"></activity>
+        <activity android:name=".MeditationActivity" />
         <activity android:name=".MindsetActivity" />
         <activity android:name=".ChallengesActivity" />
         <activity android:name=".MobilityActivity" />

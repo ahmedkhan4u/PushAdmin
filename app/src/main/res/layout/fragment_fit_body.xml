@@ -206,7 +206,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/curve_bg_white"
                 android:gravity="center"
-                android:id="@+id/fitbody_mypush"
+                android:id="@+id/fitbody_details"
                 >
 
                 <TextView

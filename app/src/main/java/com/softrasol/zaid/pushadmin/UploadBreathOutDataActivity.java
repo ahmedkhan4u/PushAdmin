@@ -4,11 +4,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +26,8 @@ import com.softrasol.zaid.pushadmin.Model.PointsModel;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
+import net.vrgsoft.videcrop.VideoCropActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +40,7 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
     private TextInputEditText mTxtTitle;
     private String title;
 
+    private int CropRequest = 11111;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +48,11 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
         setContentView(R.layout.activity_upload_breath_out_data);
 
         widgetsInitailization();
+
+        String inputPath = "Video Path/storage/emulated/0/DCIM/Camera/fb7bcbbb3594e3d0d49e2a65064e9de3.mp4";
+        String outPutPath = "Video Path/storage/emulated/0/DCIM/Camera/fb7bcbbb3594e3d0d49e2a65064e9ded3.mp4";
+
+        startActivityForResult(VideoCropActivity.createIntent(this, inputPath, outPutPath), CropRequest);
 
 
 
@@ -69,29 +79,68 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+//        if (resultCode == RESULT_OK) {
+//            if (requestCode == 1) {
+//                videoUri = data.getData();
+//                Uri uri = Uri.parse(videoUri+"");
+//                mBreathOutVideo.setVideoURI(uri);
+//                mBreathOutVideo.start();
+//                MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
+//                mBreathOutVideo.setMediaController(mediaController);
+//
+//            }
+//        }
+
+
         if (resultCode == RESULT_OK) {
             if (requestCode == 1) {
-                videoUri = data.getData();
-                Uri uri = Uri.parse(videoUri+"");
-                mBreathOutVideo.setVideoURI(uri);
-                mBreathOutVideo.start();
-                MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
-                mBreathOutVideo.setMediaController(mediaController);
+                Uri selectedImageUri = data.getData();
+
+                String path = getImageFilePath(selectedImageUri);
+
+                Log.d("videoPath", "Video Path"+path);
+
+                String outPutPath = "Video Path/storage/emulated/0/DCIM/Camera/fb7bcbbb3594e3d0d49e2a65064e9de3dd.mp4";
+
+                startActivityForResult(
+                        VideoCropActivity.createIntent(
+                        this,
+                        path
+                        , outPutPath),
+                        CropRequest);
 
             }
         }
 
-        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
-            if (resultCode == RESULT_OK) {
-                imageUri = result.getUri();
-                Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
-            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                Exception error = result.getError();
-            }
+        if(requestCode == CropRequest && resultCode == RESULT_OK){
+            //crop successful
+            videoUri = data.getData();
+
+            Log.d(
+                    "dxdiag",
+                    "Video Choosed"
+            );
+//                Uri uri = Uri.parse(videoUri+"");
+//                mBreathOutVideo.setVideoURI(uri);
+//                mBreathOutVideo.start();
+//                MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
+//                mBreathOutVideo.setMediaController(mediaController);
+
         }
+
+
+//        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+//            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+//            if (resultCode == RESULT_OK) {
+//                imageUri = result.getUri();
+//                Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
+//            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+//                Exception error = result.getError();
+//            }
+//        }
 
     }
+
 
     public void ChooseVideoClick(View view) {
 
@@ -193,6 +242,26 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
                 .setGuidelines(CropImageView.Guidelines.ON)
                 .setAspectRatio(1,2)
                 .start(UploadBreathOutDataActivity.this);
+    }
+
+    public String getImageFilePath(Uri uri) {
+        String path = null, image_id = null;
+
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            image_id = cursor.getString(0);
+            image_id = image_id.substring(image_id.lastIndexOf(":") + 1);
+            cursor.close();
+        }
+
+        Cursor cursor1 = getContentResolver().query(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null, MediaStore.Video.Media._ID + " = ? ", new String[]{image_id}, null);
+        if (cursor1!=null) {
+            cursor1.moveToFirst();
+            path = cursor1.getString(cursor1.getColumnIndex(MediaStore.Video.Media.DATA));
+            cursor1.close();
+        }
+        return path;
     }
 
 }

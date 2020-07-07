@@ -41,4 +41,7 @@ dependencies {
     //Picasso Image Library
     implementation 'com.squareup.picasso:picasso:2.71828'
 
+    //Crop Video Library
+    implementation 'com.github.VRGsoftUA:VideoCrop:1.0'
+
 }

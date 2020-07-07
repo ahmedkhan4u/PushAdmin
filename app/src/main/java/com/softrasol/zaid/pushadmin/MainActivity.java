@@ -13,6 +13,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.softrasol.zaid.pushadmin.Adapters.TabsAccessorAdapter;
 import com.softrasol.zaid.pushadmin.Fragments.EditFragment;
+import com.softrasol.zaid.pushadmin.Fragments.EditUserNameBgFragment;
 import com.softrasol.zaid.pushadmin.Fragments.FitBodyFragment;
 import com.softrasol.zaid.pushadmin.Fragments.FitMindFragment;
 import com.softrasol.zaid.pushadmin.Fragments.UploadsFragment;
@@ -51,10 +52,11 @@ public class MainActivity extends AppCompatActivity {
 
         TabsAccessorAdapter adapter = new TabsAccessorAdapter(getSupportFragmentManager());
 
-        adapter.setFragment(new UploadsFragment(),"Upload");
-        adapter.setFragment(new EditFragment(), "Edit");
+        //adapter.setFragment(new UploadsFragment(),"Upload");
+        adapter.setFragment(new EditFragment(), "Water Mark");
         adapter.setFragment(new FitMindFragment(), "Fit Mind");
         adapter.setFragment(new FitBodyFragment(), "Fit Body");
+        adapter.setFragment(new EditUserNameBgFragment(), "Edit User Bg");
 
         mTabLayout.setupWithViewPager(mViewPager);
         mViewPager.setAdapter(adapter);

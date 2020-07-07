@@ -114,7 +114,7 @@ public class EditFragment extends Fragment {
     private void updateWaterMark() {
 
         String waterMarkText = mTxtWatermark.getText().toString().trim();
-        Map map = new HashMap();
+        final Map map = new HashMap();
         map.put("textwatermark", waterMarkText);
 
         documentReference.update(map).addOnCompleteListener(new OnCompleteListener() {
@@ -124,7 +124,18 @@ public class EditFragment extends Fragment {
                     Toast.makeText(getContext(), "Watermark Updated Successfully", Toast.LENGTH_LONG).show();
                     progressDialog.dismiss();
                 }else {
-                    Toast.makeText(getContext(), "Database Error : "+task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                        @Override
+                        public void onComplete(@NonNull Task task) {
+                            if (task.isSuccessful()){
+                                progressDialog.cancel();
+                                Toast.makeText(getContext(), "Watermark Updated Successfully", Toast.LENGTH_LONG).show();
+                            }else {
+                                progressDialog.cancel();
+                                Toast.makeText(getContext(), "Database Error : "+task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -239,7 +250,7 @@ public class EditFragment extends Fragment {
 
     private void saveDataToFirestoreDatabase(String downloadUrl) {
 
-        Map map = new HashMap();
+        final Map map = new HashMap();
         map.put("image_url", downloadUrl);
 
         documentReference.update(map).addOnCompleteListener(new OnCompleteListener() {
@@ -249,7 +260,18 @@ public class EditFragment extends Fragment {
                     Toast.makeText(getContext(), "Image Updated Successfully", Toast.LENGTH_LONG).show();
                     progressDialog.dismiss();
                 }else {
-                    Toast.makeText(getContext(), "Database Error : "+task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                        @Override
+                        public void onComplete(@NonNull Task task) {
+                            if (task.isSuccessful()){
+                                progressDialog.cancel();
+                                Toast.makeText(getContext(), "Image Updated Successfully", Toast.LENGTH_LONG).show();
+                            }else {
+                                Toast.makeText(getContext(), "Database Error : "+task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                                progressDialog.cancel();
+                            }
+                        }
+                    });
                 }
             }
         });

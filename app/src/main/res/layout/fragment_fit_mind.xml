@@ -203,21 +203,21 @@
                 android:layout_height="110dp"
                 android:orientation="vertical"
                 android:layout_weight="1"
-                android:visibility="gone"
                 android:background="@drawable/curve_bg_white"
                 android:gravity="center"
-                android:id="@+id/fitmind_mypush"
+                android:id="@+id/fitmind_details"
                 >
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="My Push"
+                    android:text="Fit Mind Details"
                     android:drawableTop="@drawable/ic_mypush"
                     android:gravity="center"
                     android:textSize="10sp"
                     android:textColor="#2E2E2E"
                     android:drawablePadding="16dp"
+                    android:id="@+id/d"
                     />
 
             </RelativeLayout>

@@ -104,7 +104,6 @@ public class UploadMeditationData {
                                     }
                                 });
 
-
                             } else {
                                 // Handle failures
                                 // ...
@@ -112,8 +111,6 @@ public class UploadMeditationData {
                             }
                         }
                     });
-
-
 
                 } else {
                     // Handle failures
@@ -123,9 +120,7 @@ public class UploadMeditationData {
             }
         });
 
-
         return status;
     }
-
 
 }

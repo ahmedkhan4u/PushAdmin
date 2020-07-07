@@ -30,7 +30,7 @@
             android:layout_centerHorizontal="true"
             android:layout_marginTop="280dp"
             android:background="@drawable/btn_bg"
-            android:text="Edit Image"
+            android:text="Upload Image"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:drawableStart="@drawable/ic_camers"

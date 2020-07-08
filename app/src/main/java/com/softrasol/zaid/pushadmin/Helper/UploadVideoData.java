@@ -33,6 +33,7 @@ public class UploadVideoData {
                                           final String title,
                                           final List<PointsModel> list){
 
+
         final CollectionReference collectionReference =
                 FirebaseFirestore.getInstance().collection("videos");
 
@@ -41,71 +42,135 @@ public class UploadVideoData {
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child("videos");
         final StorageReference ref = storageRef.child(storageName);
 
-        final UploadTask uploadTask2 = ref.putFile(Uri.parse(videoUrl));
-        Task<Uri> urlTask = uploadTask2.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-            @Override
-            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                if (!task.isSuccessful()) {
-                    throw task.getException();
+
+
+        if (videoUrl.startsWith("https") || videoUrl.equalsIgnoreCase(null)){
+            Map map = new HashMap();
+            map.put("video_url", videoUrl);
+            map.put("title", title);
+            documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                @Override
+                public void onComplete(@NonNull Task task) {
+                    if (task.isSuccessful()){
+
+                        for (int i=0; i<list.size(); i++){
+
+                            PointsModel model = new PointsModel(list.get(i).getTitle(),
+                                    list.get(i).getSub_title());
+
+                            CollectionReference collectionReference1 =
+                                    documentReference.collection("points_data");
+
+                            DocumentReference documentReference1 =
+                                    collectionReference1.document(i+"");
+
+                            documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()){
+                                        status = true;
+                                        Log.d("dxdiag", "Data Uploaded");
+                                    }else {
+                                        status = false;
+                                        Log.d("dxdiag", "Data Not Uploaded");
+
+                                    }
+                                }
+                            });
+
+
+
+                        }
+                    }else {
+                        status = false;
+                        Log.d("dxdiag", "Data Not Uploaded"+ task.getException().getMessage());
+
+
+                    }
                 }
+            });
 
-                // Continue with the task to get the download URL
-                return ref.getDownloadUrl();
-            }
-        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-            @Override
-            public void onComplete(@NonNull Task<Uri> task) {
-                if (task.isSuccessful()) {
-                    downloadUrl = task.getResult().toString();
-                    Log.d("dxdiag", "Video Uploaded");
+        }
 
-                    Map map = new HashMap();
-                    map.put("video_url", downloadUrl);
-                    map.put("title", title);
-                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
-                        @Override
-                        public void onComplete(@NonNull Task task) {
-                            if (task.isSuccessful()){
+        else {
+            final UploadTask uploadTask2 = ref.putFile(Uri.parse(videoUrl));
+            Task<Uri> urlTask = uploadTask2.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                @Override
+                public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
 
-                                for (int i=0; i<list.size(); i++){
+                    // Continue with the task to get the download URL
+                    return ref.getDownloadUrl();
+                }
+            }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                @Override
+                public void onComplete(@NonNull Task<Uri> task) {
+                    if (task.isSuccessful()) {
+                        downloadUrl = task.getResult().toString();
+                        Log.d("dxdiag", "Video Uploaded");
 
-                                    PointsModel model = new PointsModel(list.get(i).getTitle(),
-                                            list.get(i).getSub_title());
+                        Map map = new HashMap();
+                        map.put("video_url", downloadUrl);
+                        map.put("title", title);
+                        documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                            @Override
+                            public void onComplete(@NonNull Task task) {
+                                if (task.isSuccessful()){
 
-                                    CollectionReference collectionReference1 =
-                                            documentReference.collection("points_data");
+                                    for (int i=0; i<list.size(); i++){
 
-                                    DocumentReference documentReference1 =
-                                            collectionReference1.document(i+"");
+                                        PointsModel model = new PointsModel(list.get(i).getTitle(),
+                                                list.get(i).getSub_title());
 
-                                    documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()){
-                                                status = true;
-                                            }else {
-                                                status = false;
+                                        CollectionReference collectionReference1 =
+                                                documentReference.collection("points_data");
+
+                                        DocumentReference documentReference1 =
+                                                collectionReference1.document(i+"");
+
+                                        documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                if (task.isSuccessful()){
+                                                    Log.d("dxdiag", "Data Uploaded");
+
+                                                }else {
+                                                    Log.d("dxdiag", "Data Not Uploaded");
+
+                                                }
                                             }
-                                        }
-                                    });
+                                        });
+
+
+                                    }
+                                }else {
+                                    status = false;
+                                    Log.d("dxdiag", "Data Not Uploaded"+ task.getException().getMessage());
+
 
                                 }
-                            }else {
-                                status = false;
                             }
-                        }
-                    });
+                        });
 
-                } else {
-                    // Handle failures
-                    status = false;
-                    // ...
+                    } else {
+                        // Handle failures
+                        status = false;
+                        Log.d("dxdiag", "Video Not Uploaded"+ task.getException().getMessage());
+
+                        // ...
+                    }
                 }
-            }
-        });
+            });
 
+
+        }
 
         return status;
+
     }
+
+
 
 }

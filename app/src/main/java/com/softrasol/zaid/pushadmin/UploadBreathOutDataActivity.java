@@ -1,5 +1,6 @@
 package com.softrasol.zaid.pushadmin;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,8 +19,16 @@ import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.softrasol.zaid.pushadmin.Adapters.PointsAdapter;
 import com.softrasol.zaid.pushadmin.Helper.UploadVideoData;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
@@ -34,7 +43,7 @@ import java.util.List;
 public class UploadBreathOutDataActivity extends AppCompatActivity {
 
     VideoView mBreathOutVideo;
-    private Uri videoUri, imageUri;
+    private Uri videoUri = null;
     private RecyclerView mRecyclerView;
     private List<PointsModel> list = new ArrayList<>();
     private TextInputEditText mTxtTitle;
@@ -49,10 +58,68 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
 
         widgetsInitailization();
 
-        String inputPath = "Video Path/storage/emulated/0/DCIM/Camera/fb7bcbbb3594e3d0d49e2a65064e9de3.mp4";
-        String outPutPath = "Video Path/storage/emulated/0/DCIM/Camera/fb7bcbbb3594e3d0d49e2a65064e9ded3.mp4";
+        getDataFromFirebaseDatabase();
 
-        startActivityForResult(VideoCropActivity.createIntent(this, inputPath, outPutPath), CropRequest);
+    }
+
+    private void getDataFromFirebaseDatabase() {
+
+        CollectionReference collectionReference = FirebaseFirestore.getInstance()
+                .collection("videos");
+        final DocumentReference documentReference = collectionReference
+                .document("breath_work");
+
+        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()){
+                    if (task.getResult().exists()){
+
+                        if (task.getResult().contains("title")){
+                            title = task.getResult().getString("title");
+                            mTxtTitle.setText(title);
+                        }
+
+                        if (task.getResult().contains("video_url")){
+                            videoUri = Uri.parse(task.getResult().getString("video_url"));
+                            mBreathOutVideo.setVideoURI(videoUri);
+                            mBreathOutVideo.start();
+                            MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
+                            mBreathOutVideo.setMediaController(mediaController);
+                        }
+
+
+                            documentReference.collection("points_data").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                @Override
+                                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+
+                                    if (!list.isEmpty()){
+                                        list.clear();
+                                    }
+
+                                    if (task.isSuccessful()){
+                                        if (task.getResult().size() > 0){
+                                            for (QueryDocumentSnapshot snapshot : task.getResult()){
+
+                                                PointsModel model = snapshot.toObject(PointsModel.class);
+
+                                                list.add(model);
+                                            }
+                                            showPointsOnRecyclerView();
+                                    }
+                                }                                        }
+
+                    });
+
+
+
+                    }
+                }
+            }
+        });
+
+
+
 
 
 
@@ -79,53 +146,16 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        if (resultCode == RESULT_OK) {
-//            if (requestCode == 1) {
-//                videoUri = data.getData();
-//                Uri uri = Uri.parse(videoUri+"");
-//                mBreathOutVideo.setVideoURI(uri);
-//                mBreathOutVideo.start();
-//                MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
-//                mBreathOutVideo.setMediaController(mediaController);
-//
-//            }
-//        }
-
-
         if (resultCode == RESULT_OK) {
             if (requestCode == 1) {
-                Uri selectedImageUri = data.getData();
-
-                String path = getImageFilePath(selectedImageUri);
-
-                Log.d("videoPath", "Video Path"+path);
-
-                String outPutPath = "Video Path/storage/emulated/0/DCIM/Camera/fb7bcbbb3594e3d0d49e2a65064e9de3dd.mp4";
-
-                startActivityForResult(
-                        VideoCropActivity.createIntent(
-                        this,
-                        path
-                        , outPutPath),
-                        CropRequest);
+                videoUri = data.getData();
+                Uri uri = Uri.parse(videoUri+"");
+                mBreathOutVideo.setVideoURI(uri);
+                mBreathOutVideo.start();
+                MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
+                mBreathOutVideo.setMediaController(mediaController);
 
             }
-        }
-
-        if(requestCode == CropRequest && resultCode == RESULT_OK){
-            //crop successful
-            videoUri = data.getData();
-
-            Log.d(
-                    "dxdiag",
-                    "Video Choosed"
-            );
-//                Uri uri = Uri.parse(videoUri+"");
-//                mBreathOutVideo.setVideoURI(uri);
-//                mBreathOutVideo.start();
-//                MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
-//                mBreathOutVideo.setMediaController(mediaController);
-
         }
 
 
@@ -198,7 +228,7 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
     private void showPointsOnRecyclerView() {
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        PointsAdapter adapter = new PointsAdapter(getApplicationContext(), list);
+        PointsAdapter adapter = new PointsAdapter(UploadBreathOutDataActivity.this, list);
         mRecyclerView.setAdapter(adapter);
 
     }
@@ -207,21 +237,21 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
 
         title = mTxtTitle.getText().toString().trim();
 
-        if (title.length()<3){
-            mTxtTitle.setError("Title too short");
-            mTxtTitle.requestFocus();
-            return;
-        }
-
-        if (videoUri == null){
-            Toast.makeText(this, "Kindly choose video", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (list.isEmpty()){
-            Toast.makeText(this, "Kindly add a point", Toast.LENGTH_SHORT).show();
-            return;
-        }
+//        if (title.length()<3){
+//            mTxtTitle.setError("Title too short");
+//            mTxtTitle.requestFocus();
+//            return;
+//        }
+//
+//        if (videoUri == null){
+//            Toast.makeText(this, "Kindly choose video", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//
+//        if (list.isEmpty()){
+//            Toast.makeText(this, "Kindly add a point", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
 
 
         boolean result = UploadVideoData.uploadVideoData("breath_work","breath_work",
@@ -231,7 +261,7 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
             finish();
         }else {
-            Toast.makeText(this, "Failure Occurred", Toast.LENGTH_SHORT).show();
+            showToast("Failure Occurred");
         }
 
     }
@@ -244,24 +274,8 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
                 .start(UploadBreathOutDataActivity.this);
     }
 
-    public String getImageFilePath(Uri uri) {
-        String path = null, image_id = null;
-
-        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-        if (cursor != null) {
-            cursor.moveToFirst();
-            image_id = cursor.getString(0);
-            image_id = image_id.substring(image_id.lastIndexOf(":") + 1);
-            cursor.close();
-        }
-
-        Cursor cursor1 = getContentResolver().query(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null, MediaStore.Video.Media._ID + " = ? ", new String[]{image_id}, null);
-        if (cursor1!=null) {
-            cursor1.moveToFirst();
-            path = cursor1.getString(cursor1.getColumnIndex(MediaStore.Video.Media.DATA));
-            cursor1.close();
-        }
-        return path;
+    public void showToast(String message){
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
 }

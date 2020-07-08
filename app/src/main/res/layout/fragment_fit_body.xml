@@ -212,7 +212,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="My Push"
+                    android:text="Fit Body Details"
                     android:drawableTop="@drawable/ic_mypush"
                     android:gravity="center"
                     android:textSize="10sp"
@@ -226,7 +226,6 @@
 
 
         </LinearLayout>
-
 
 
     </LinearLayout>

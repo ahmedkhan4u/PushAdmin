@@ -64,6 +64,8 @@ public class UploadsFragment extends Fragment {
         mView =  inflater.inflate(R.layout.fragment_uploads, container, false);
 
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+
 
         progressDialog = new ProgressDialog(getContext());
 

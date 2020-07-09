@@ -10,9 +10,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.MediaController;
+import android.widget.ImageView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -25,27 +24,30 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.softrasol.zaid.pushadmin.Adapters.PointsAdapter;
-import com.softrasol.zaid.pushadmin.Helper.UploadVideoData;
+import com.softrasol.zaid.pushadmin.Helper.UploadMindSetData;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
+import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MobilityActivity extends AppCompatActivity {
+public class NutritionActivity extends AppCompatActivity {
 
-    VideoView mBreathOutVideo;
-    private Uri videoUri, imageUri;
+
     private RecyclerView mRecyclerView;
     private List<PointsModel> list = new ArrayList<>();
-    private TextInputEditText mTxtTitle;
-    private String title;
+    private TextInputEditText mTxtTitle, mTxtDesription;
+    private String title, description;
+    private ImageView bgImage;
+    private Uri imageUri;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_mobility);
+        setContentView(R.layout.activity_nutrition);
 
         widgetsInitailization();
         getDataFromFirebaseDatabase();
@@ -55,9 +57,9 @@ public class MobilityActivity extends AppCompatActivity {
     private void getDataFromFirebaseDatabase() {
 
         CollectionReference collectionReference = FirebaseFirestore.getInstance()
-                .collection("videos");
+                .collection("nutrition");
         final DocumentReference documentReference = collectionReference
-                .document("mobility");
+                .document("nutrition");
 
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -70,12 +72,21 @@ public class MobilityActivity extends AppCompatActivity {
                             mTxtTitle.setText(title);
                         }
 
-                        if (task.getResult().contains("video_url")){
-                            videoUri = Uri.parse(task.getResult().getString("video_url"));
-                            mBreathOutVideo.setVideoURI(videoUri);
-                            mBreathOutVideo.start();
-                            MediaController mediaController = new MediaController(MobilityActivity.this);
-                            mBreathOutVideo.setMediaController(mediaController);
+                        if (task.getResult().contains("image_url")){
+
+                            try {
+
+                                imageUri = Uri.parse(task.getResult().getString("image_url"));
+                                Picasso.get().load(task.getResult().getString("image_url"))
+                                        .into(bgImage);
+
+                            }catch (Exception ex){
+                            }
+
+                        }
+
+                        if (task.getResult().contains("description")){
+                            mTxtDesription.setText(task.getResult().getString("description"));
                         }
 
 
@@ -108,64 +119,17 @@ public class MobilityActivity extends AppCompatActivity {
             }
         });
 
-
-
-
-
-
-    }
-
-
-    private void pickVideoFromGallary() {
-
-        Intent intent = new Intent();
-        intent.setType("video/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent,"Select Video"),1);
-
     }
 
     private void widgetsInitailization() {
-        mBreathOutVideo = findViewById(R.id.breathout_video);
         mRecyclerView = findViewById(R.id.recyclerview_breathwork);
         mTxtTitle = findViewById(R.id.txt_breathwork_title);
+        mTxtDesription = findViewById(R.id.txt_mindset_description);
+        bgImage = findViewById(R.id.bg);
     }
 
     public void BackClick(View view) {
         onBackPressed();
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            if (requestCode == 1) {
-                videoUri = data.getData();
-                Uri uri = Uri.parse(videoUri+"");
-                mBreathOutVideo.setVideoURI(uri);
-                mBreathOutVideo.start();
-                MediaController mediaController = new MediaController(MobilityActivity.this);
-                mBreathOutVideo.setMediaController(mediaController);
-
-            }
-        }
-
-        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
-            if (resultCode == RESULT_OK) {
-                imageUri = result.getUri();
-                Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
-
-            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                Exception error = result.getError();
-            }
-        }
-
-    }
-
-    public void ChooseVideoClick(View view) {
-
-        pickVideoFromGallary();
-
     }
 
     public void AddNoteClick(View view) {
@@ -176,7 +140,7 @@ public class MobilityActivity extends AppCompatActivity {
 
     private void showBottomSheetDialog() {
 
-        final BottomSheetDialog dialog = new BottomSheetDialog(MobilityActivity.this);
+        final BottomSheetDialog dialog = new BottomSheetDialog(NutritionActivity.this);
         dialog.setContentView(R.layout.bottom_sheet_points_data);
 
         dialog.show();
@@ -218,7 +182,7 @@ public class MobilityActivity extends AppCompatActivity {
     private void showPointsOnRecyclerView() {
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        PointsAdapter adapter = new PointsAdapter(MobilityActivity.this, list);
+        PointsAdapter adapter = new PointsAdapter(NutritionActivity.this, list);
         mRecyclerView.setAdapter(adapter);
 
     }
@@ -226,26 +190,11 @@ public class MobilityActivity extends AppCompatActivity {
     public void UploadDataClick(View view) {
 
         title = mTxtTitle.getText().toString().trim();
-
-        if (title.length()<3){
-            mTxtTitle.setError("Title too short");
-            mTxtTitle.requestFocus();
-            return;
-        }
-
-        if (videoUri == null){
-            Toast.makeText(this, "Kindly choose video", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (list.isEmpty()){
-            Toast.makeText(this, "Kindly add a point", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        description = mTxtDesription.getText().toString().trim();
 
 
-        boolean result = UploadVideoData.uploadVideoData("mobility","mobility",
-                videoUri+"", title, list);
+        boolean result = UploadMindSetData.uploadMindSetData(title, description,
+                "nutrition", "nutrition", list, imageUri+"");
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
@@ -261,6 +210,23 @@ public class MobilityActivity extends AppCompatActivity {
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
                 .setAspectRatio(2,3)
-                .start(MobilityActivity.this);
+                .start(NutritionActivity.this);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                imageUri = result.getUri();
+                Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
+                bgImage.setImageURI(imageUri);
+
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                Exception error = result.getError();
+            }
+        }
+
     }
 }

@@ -146,7 +146,7 @@ public class UploadUserNameImageBg extends AppCompatActivity {
     public void ChooseImageClick(View view) {
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
-                .setAspectRatio(1,2)
+                .setAspectRatio(2,3)
                 .start(UploadUserNameImageBg.this);
     }
 

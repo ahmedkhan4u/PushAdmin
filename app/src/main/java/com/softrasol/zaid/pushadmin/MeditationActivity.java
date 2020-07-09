@@ -186,7 +186,7 @@ public class MeditationActivity extends AppCompatActivity {
 
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
-                .setAspectRatio(1,2)
+                .setAspectRatio(2,3)
                 .start(MeditationActivity.this);
     }
 

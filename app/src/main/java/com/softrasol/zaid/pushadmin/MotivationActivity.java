@@ -58,7 +58,7 @@ public class MotivationActivity extends AppCompatActivity {
         CollectionReference collectionReference = FirebaseFirestore.getInstance()
                 .collection("videos");
         final DocumentReference documentReference = collectionReference
-                .document("challenges");
+                .document("motivation");
 
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -108,11 +108,6 @@ public class MotivationActivity extends AppCompatActivity {
                 }
             }
         });
-
-
-
-
-
 
     }
 
@@ -262,7 +257,7 @@ public class MotivationActivity extends AppCompatActivity {
 
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
-                .setAspectRatio(1,2)
+                .setAspectRatio(2,3)
                 .start(MotivationActivity.this);
     }
 }

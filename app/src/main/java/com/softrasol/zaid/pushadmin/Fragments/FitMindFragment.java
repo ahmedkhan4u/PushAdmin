@@ -1,7 +1,6 @@
 package com.softrasol.zaid.pushadmin.Fragments;
 
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -26,8 +25,7 @@ import com.softrasol.zaid.pushadmin.MeditationActivity;
 import com.softrasol.zaid.pushadmin.MindsetActivity;
 import com.softrasol.zaid.pushadmin.MotivationActivity;
 import com.softrasol.zaid.pushadmin.R;
-import com.softrasol.zaid.pushadmin.UploadBreathOutDataActivity;
-import com.softrasol.zaid.pushadmin.UploadUserNameImageBg;
+import com.softrasol.zaid.pushadmin.BreathworkActivity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -193,7 +191,7 @@ public class FitMindFragment extends Fragment {
         mBreathout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(), UploadBreathOutDataActivity.class));
+                startActivity(new Intent(getActivity(), BreathworkActivity.class));
             }
         });
     }

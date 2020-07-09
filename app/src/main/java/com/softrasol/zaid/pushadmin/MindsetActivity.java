@@ -1,5 +1,6 @@
 package com.softrasol.zaid.pushadmin;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -7,21 +8,33 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.softrasol.zaid.pushadmin.Adapters.PointsAdapter;
 import com.softrasol.zaid.pushadmin.Helper.UploadMindSetData;
 import com.softrasol.zaid.pushadmin.Helper.UploadVideoData;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
+import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
+import java.security.spec.ECField;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +45,7 @@ public class MindsetActivity extends AppCompatActivity {
     private List<PointsModel> list = new ArrayList<>();
     private TextInputEditText mTxtTitle, mTxtDesription;
     private String title, description;
+    private ImageView bgImage;
     private Uri imageUri;
 
     @Override
@@ -40,14 +54,82 @@ public class MindsetActivity extends AppCompatActivity {
         setContentView(R.layout.activity_mindset);
 
         widgetsInitailization();
+        getDataFromFirebaseDatabase();
 
     }
 
+    private void getDataFromFirebaseDatabase() {
+
+        CollectionReference collectionReference = FirebaseFirestore.getInstance()
+                .collection("mindset");
+        final DocumentReference documentReference = collectionReference
+                .document("mindset");
+
+        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()){
+                    if (task.getResult().exists()){
+
+                        if (task.getResult().contains("title")){
+                            title = task.getResult().getString("title");
+                            mTxtTitle.setText(title);
+                        }
+
+                        if (task.getResult().contains("image_url")){
+
+                            try {
+
+                                imageUri = Uri.parse(task.getResult().getString("image_url"));
+                                Picasso.get().load(task.getResult().getString("image_url"))
+                                        .into(bgImage);
+
+                            }catch (Exception ex){
+                            }
+
+                        }
+
+                        if (task.getResult().contains("description")){
+                            mTxtDesription.setText(task.getResult().getString("description"));
+                        }
+
+
+                        documentReference.collection("points_data").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+
+                                if (!list.isEmpty()){
+                                    list.clear();
+                                }
+
+                                if (task.isSuccessful()){
+                                    if (task.getResult().size() > 0){
+                                        for (QueryDocumentSnapshot snapshot : task.getResult()){
+
+                                            PointsModel model = snapshot.toObject(PointsModel.class);
+
+                                            list.add(model);
+                                        }
+                                        showPointsOnRecyclerView();
+                                    }
+                                }                                        }
+
+                        });
+
+
+
+                    }
+                }
+            }
+        });
+
+    }
 
     private void widgetsInitailization() {
         mRecyclerView = findViewById(R.id.recyclerview_breathwork);
         mTxtTitle = findViewById(R.id.txt_breathwork_title);
         mTxtDesription = findViewById(R.id.txt_mindset_description);
+        bgImage = findViewById(R.id.bg);
     }
 
     public void BackClick(View view) {
@@ -104,7 +186,7 @@ public class MindsetActivity extends AppCompatActivity {
     private void showPointsOnRecyclerView() {
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        PointsAdapter adapter = new PointsAdapter(getApplicationContext(), list);
+        PointsAdapter adapter = new PointsAdapter(MindsetActivity.this, list);
         mRecyclerView.setAdapter(adapter);
 
     }
@@ -114,31 +196,9 @@ public class MindsetActivity extends AppCompatActivity {
         title = mTxtTitle.getText().toString().trim();
         description = mTxtDesription.getText().toString().trim();
 
-        if (title.length()<3){
-            mTxtTitle.setError("Title too short");
-            mTxtTitle.requestFocus();
-            return;
-        }
-
-        if (description.length()<3){
-            mTxtDesription.setError("Title too short");
-            mTxtDesription.requestFocus();
-            return;
-        }
-
-
-        if (list.isEmpty()){
-            Toast.makeText(this, "Kindly add a point", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (imageUri == null){
-            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         boolean result = UploadMindSetData.uploadMindSetData(title, description,
-                "mindset", list, imageUri+"");
+                "mindset", "mindset", list, imageUri+"");
 
         if (result = true){
             Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
@@ -153,7 +213,7 @@ public class MindsetActivity extends AppCompatActivity {
 
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
-                .setAspectRatio(1,2)
+                .setAspectRatio(2,3)
                 .start(MindsetActivity.this);
     }
 
@@ -165,6 +225,7 @@ public class MindsetActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 imageUri = result.getUri();
                 Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
+                bgImage.setImageURI(imageUri);
 
             } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
                 Exception error = result.getError();

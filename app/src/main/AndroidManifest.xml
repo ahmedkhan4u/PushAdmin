@@ -12,14 +12,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".UploadUserNameImageBg"></activity>
+        <activity android:name=".NutritionActivity"></activity>
+        <activity android:name=".UploadUserNameImageBg" />
         <activity android:name=".MeditationActivity" />
         <activity android:name=".MindsetActivity" />
         <activity android:name=".ChallengesActivity" />
         <activity android:name=".MobilityActivity" />
         <activity android:name=".ExerciseActivity" />
         <activity android:name=".MotivationActivity" />
-        <activity android:name=".UploadBreathOutDataActivity" />
+        <activity android:name=".BreathworkActivity" />
         <activity android:name=".SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

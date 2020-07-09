@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:nestedScrollingEnabled="true"
-    tools:context=".MindsetActivity">
+    tools:context=".NutritionActivity">
 
 
     <ImageView
@@ -49,7 +49,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
-                        android:text="Mindset"
+                        android:text="Nutrition"
                         android:textColor="@android:color/white"
                         style="@style/TextAppearance.AppCompat.Title"
                         android:layout_gravity="center"

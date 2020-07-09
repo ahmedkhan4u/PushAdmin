@@ -24,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.softrasol.zaid.pushadmin.ChallengesActivity;
 import com.softrasol.zaid.pushadmin.ExerciseActivity;
 import com.softrasol.zaid.pushadmin.MobilityActivity;
+import com.softrasol.zaid.pushadmin.NutritionActivity;
 import com.softrasol.zaid.pushadmin.R;
 
 import java.util.HashMap;
@@ -40,7 +41,7 @@ public class FitBodyFragment extends Fragment {
     }
 
     private View mView;
-    private RelativeLayout mChallenges, mExercise, mMobility, mDetails, mPrograms;
+    private RelativeLayout mChallenges, mExercise, mMobility, mDetails, mPrograms, mNutrition;
     AlertDialog alert11;
 
     @Override
@@ -53,6 +54,7 @@ public class FitBodyFragment extends Fragment {
         mobilityClick();
         challengesClick();
         exerciseClick();
+        nutritionClick();
 
         mDetails.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -72,6 +74,17 @@ public class FitBodyFragment extends Fragment {
 
 
         return mView;
+    }
+
+    private void nutritionClick() {
+
+        mNutrition.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), NutritionActivity.class));
+            }
+        });
+
     }
 
     private void exerciseClick() {
@@ -107,6 +120,7 @@ public class FitBodyFragment extends Fragment {
         mExercise = mView.findViewById(R.id.fitbody_exercise);
         mMobility = mView.findViewById(R.id.fitbody_mobility);
         mPrograms = mView.findViewById(R.id.fitbody_programs);
+        mNutrition = mView.findViewById(R.id.fitbody_nutrition);
 
         mDetails = mView.findViewById(R.id.fitbody_details);
     }

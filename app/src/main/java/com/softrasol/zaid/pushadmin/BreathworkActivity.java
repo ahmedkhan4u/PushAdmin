@@ -5,14 +5,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.MediaController;
@@ -35,12 +30,10 @@ import com.softrasol.zaid.pushadmin.Model.PointsModel;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
-import net.vrgsoft.videcrop.VideoCropActivity;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class UploadBreathOutDataActivity extends AppCompatActivity {
+public class BreathworkActivity extends AppCompatActivity {
 
     VideoView mBreathOutVideo;
     private Uri videoUri = null;
@@ -84,7 +77,7 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
                             videoUri = Uri.parse(task.getResult().getString("video_url"));
                             mBreathOutVideo.setVideoURI(videoUri);
                             mBreathOutVideo.start();
-                            MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
+                            MediaController mediaController = new MediaController(BreathworkActivity.this);
                             mBreathOutVideo.setMediaController(mediaController);
                         }
 
@@ -152,7 +145,7 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
                 Uri uri = Uri.parse(videoUri+"");
                 mBreathOutVideo.setVideoURI(uri);
                 mBreathOutVideo.start();
-                MediaController mediaController = new MediaController(UploadBreathOutDataActivity.this);
+                MediaController mediaController = new MediaController(BreathworkActivity.this);
                 mBreathOutVideo.setMediaController(mediaController);
 
             }
@@ -186,7 +179,7 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
 
     private void showBottomSheetDialog() {
 
-        final BottomSheetDialog dialog = new BottomSheetDialog(UploadBreathOutDataActivity.this);
+        final BottomSheetDialog dialog = new BottomSheetDialog(BreathworkActivity.this);
         dialog.setContentView(R.layout.bottom_sheet_points_data);
 
         dialog.show();
@@ -228,7 +221,7 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
     private void showPointsOnRecyclerView() {
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        PointsAdapter adapter = new PointsAdapter(UploadBreathOutDataActivity.this, list);
+        PointsAdapter adapter = new PointsAdapter(BreathworkActivity.this, list);
         mRecyclerView.setAdapter(adapter);
 
     }
@@ -270,8 +263,8 @@ public class UploadBreathOutDataActivity extends AppCompatActivity {
 
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
-                .setAspectRatio(1,2)
-                .start(UploadBreathOutDataActivity.this);
+                .setAspectRatio(2,3)
+                .start(BreathworkActivity.this);
     }
 
     public void showToast(String message){

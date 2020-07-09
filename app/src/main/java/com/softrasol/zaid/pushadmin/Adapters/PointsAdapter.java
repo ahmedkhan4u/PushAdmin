@@ -75,9 +75,6 @@ public class PointsAdapter extends RecyclerView.Adapter<PointsAdapter.ViewHolder
                                 dialog.cancel();
                                 list.remove(position);
                                 Toast.makeText(context, "item deleted at index "+position , Toast.LENGTH_SHORT).show();
-
-                                new PointsAdapter(context, list);
-
                                 refreshView(position);
                             }
                         });

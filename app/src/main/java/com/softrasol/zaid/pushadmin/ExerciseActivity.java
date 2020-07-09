@@ -57,7 +57,7 @@ public class ExerciseActivity extends AppCompatActivity {
         CollectionReference collectionReference = FirebaseFirestore.getInstance()
                 .collection("videos");
         final DocumentReference documentReference = collectionReference
-                .document("challenges");
+                .document("exercise");
 
         documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -259,7 +259,7 @@ public class ExerciseActivity extends AppCompatActivity {
 
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
-                .setAspectRatio(1,2)
+                .setAspectRatio(2,3)
                 .start(ExerciseActivity.this);
     }
 }

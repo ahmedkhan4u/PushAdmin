@@ -1,6 +1,7 @@
 package com.softrasol.zaid.pushadmin.Helper;
 
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -24,13 +25,14 @@ public class UploadMindSetData {
     static boolean status = false;
     static String downloadUrl;
 
-    public static boolean uploadMindSetData(final String title, final String description, String documentName
+    public static boolean uploadMindSetData(final String title, final String description,
+                                            String documentName, String collectionName
     , final List<PointsModel> list, String imageUri){
 
 
 
         final CollectionReference collectionReference =
-                FirebaseFirestore.getInstance().collection("mindset");
+                FirebaseFirestore.getInstance().collection(collectionName);
 
         final DocumentReference documentReference = collectionReference.document(documentName);
 
@@ -38,72 +40,129 @@ public class UploadMindSetData {
         StorageReference storageRef = FirebaseStorage.getInstance().getReference().child("Images");
         final StorageReference ref = storageRef.child("mindset");
 
-        UploadTask uploadTask = ref.putFile(Uri.parse(imageUri));
+        if (imageUri.startsWith("https") || imageUri.equalsIgnoreCase(null)){
 
-        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-            @Override
-            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                if (!task.isSuccessful()) {
-                    throw task.getException();
+            Map map = new HashMap();
+            map.put("title", title);
+            map.put("description", description);
+            map.put("image_url", imageUri);
+
+            documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                @Override
+                public void onComplete(@NonNull Task task) {
+                    if (task.isSuccessful()){
+
+
+                        Log.d("dxdiag", "Data Saved ");
+
+                        for (int i=0; i<list.size(); i++){
+
+                            PointsModel model = new PointsModel(list.get(i).getTitle(),
+                                    list.get(i).getSub_title());
+
+                            CollectionReference collectionReference1 =
+                                    documentReference.collection("points_data");
+
+                            DocumentReference documentReference1 =
+                                    collectionReference1.document(i+"");
+
+                            documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()){
+                                        status = true;
+                                        Log.d("dxdiag", "Points Data Saved ");
+                                    }else {
+                                        status = false;
+                                        Log.d("dxdiag", "Points Data Not Saved "+task.getException()
+                                                .getMessage());
+                                    }
+                                }
+                            });
+
+                        }
+
+                    }
                 }
+            });
 
-                // Continue with the task to get the download URL
-                return ref.getDownloadUrl();
-            }
-        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-            @Override
-            public void onComplete(@NonNull Task<Uri> task) {
-                if (task.isSuccessful()) {
-                    downloadUrl = task.getResult().toString();
+        }else {
+
+            UploadTask uploadTask = ref.putFile(Uri.parse(imageUri));
+
+            Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                @Override
+                public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+
+                    // Continue with the task to get the download URL
+                    return ref.getDownloadUrl();
+                }
+            }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                @Override
+                public void onComplete(@NonNull Task<Uri> task) {
+                    if (task.isSuccessful()) {
+                        downloadUrl = task.getResult().toString();
 
 
-                    Map map = new HashMap();
-                    map.put("title", title);
-                    map.put("description", description);
-                    map.put("image_url", downloadUrl);
+                        Map map = new HashMap();
+                        map.put("title", title);
+                        map.put("description", description);
+                        map.put("image_url", downloadUrl);
 
-                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
-                        @Override
-                        public void onComplete(@NonNull Task task) {
-                            if (task.isSuccessful()){
+                        documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                            @Override
+                            public void onComplete(@NonNull Task task) {
+                                if (task.isSuccessful()){
 
-                                for (int i=0; i<list.size(); i++){
+                                    Log.d("dxdiag", "Data Saved ");
 
-                                    PointsModel model = new PointsModel(list.get(i).getTitle(),
-                                            list.get(i).getSub_title());
+                                    for (int i=0; i<list.size(); i++){
 
-                                    CollectionReference collectionReference1 =
-                                            documentReference.collection("points_data");
+                                        PointsModel model = new PointsModel(list.get(i).getTitle(),
+                                                list.get(i).getSub_title());
 
-                                    DocumentReference documentReference1 =
-                                            collectionReference1.document(i+"");
+                                        CollectionReference collectionReference1 =
+                                                documentReference.collection("points_data");
 
-                                    documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Void> task) {
-                                            if (task.isSuccessful()){
-                                                status = true;
-                                            }else {
-                                                status = false;
+                                        DocumentReference documentReference1 =
+                                                collectionReference1.document(i+"");
+
+                                        documentReference1.set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                if (task.isSuccessful()){
+                                                    status = true;
+                                                    Log.d("dxdiag", "Points Data Saved ");
+                                                }else {
+                                                    status = false;
+                                                    Log.d("dxdiag", "Points Data Not Saved "+task
+                                                    .getException().getMessage());
+                                                }
                                             }
-                                        }
-                                    });
+                                        });
+
+                                    }
 
                                 }
-
                             }
-                        }
-                    });
+                        });
 
-                } else {
-                    // Handle failures
-                    // ...
-                    status = false;
+                    } else {
+                        // Handle failures
+                        // ...
+                        status = false;
+                        Log.d("dxdiag", "Image Not Saved "+ task.getException().getMessage());
+                    }
                 }
-            }
-        });
+            });
+
+        }
 
         return status;
+
     }
 
 }

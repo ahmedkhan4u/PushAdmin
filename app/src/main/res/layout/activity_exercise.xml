@@ -36,7 +36,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="8dp"
-                    android:text="Exercise"
+                    android:text="Workout"
                     android:textColor="@android:color/white"
                     style="@style/TextAppearance.AppCompat.Title"
                     android:layout_gravity="center"

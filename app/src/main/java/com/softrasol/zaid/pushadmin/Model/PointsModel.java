@@ -1,7 +1,15 @@
 package com.softrasol.zaid.pushadmin.Model;
 
 public class PointsModel {
-    private String title, sub_title;
+    private String title, sub_title, id;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public PointsModel() {
     }

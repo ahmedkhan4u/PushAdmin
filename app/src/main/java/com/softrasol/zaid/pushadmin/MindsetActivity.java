@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -26,6 +28,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.softrasol.zaid.pushadmin.Adapters.PointsAdapter;
 import com.softrasol.zaid.pushadmin.Helper.UploadMindSetData;
 import com.softrasol.zaid.pushadmin.Helper.UploadVideoData;
@@ -36,7 +41,9 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.security.spec.ECField;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MindsetActivity extends AppCompatActivity {
 
@@ -44,14 +51,30 @@ public class MindsetActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private List<PointsModel> list = new ArrayList<>();
     private TextInputEditText mTxtTitle, mTxtDesription;
-    private String title, description;
+    private String title, description, downloadUrl;
     private ImageView bgImage;
     private Uri imageUri;
+
+    private ProgressDialog progressDialog;
+
+
+    CollectionReference collectionReference;
+    DocumentReference documentReference;
+    StorageReference storageReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mindset);
+
+        progressDialog = new ProgressDialog(this);
+
+        collectionReference = FirebaseFirestore.getInstance()
+                .collection("mindset");
+        documentReference = collectionReference
+                .document("mindset");
+        storageReference = FirebaseStorage.getInstance()
+                .getReference("Images");
 
         widgetsInitailization();
         getDataFromFirebaseDatabase();
@@ -90,7 +113,8 @@ public class MindsetActivity extends AppCompatActivity {
                         }
 
                         if (task.getResult().contains("description")){
-                            mTxtDesription.setText(task.getResult().getString("description"));
+                            description = task.getResult().getString("description");
+                            mTxtDesription.setText(description);
                         }
 
 
@@ -106,8 +130,10 @@ public class MindsetActivity extends AppCompatActivity {
                                     if (task.getResult().size() > 0){
                                         for (QueryDocumentSnapshot snapshot : task.getResult()){
 
-                                            PointsModel model = snapshot.toObject(PointsModel.class);
-
+                                            PointsModel model = new PointsModel();
+                                            model.setTitle(snapshot.getString("title"));
+                                            model.setSub_title(snapshot.getString("sub_title"));
+                                            model.setId(snapshot.getId());
                                             list.add(model);
                                         }
                                         showPointsOnRecyclerView();
@@ -173,8 +199,26 @@ public class MindsetActivity extends AppCompatActivity {
                     return;
                 }
 
-                list.add(new PointsModel(title, description));
-                dialog.cancel();
+                PointsModel model = new PointsModel(title, description);
+
+                CollectionReference collectionReference1 = documentReference
+                        .collection("points_data");
+
+                collectionReference1.document().set(model).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()){
+                            showMessage("Data Saved");
+                            progressDialog.cancel();
+                            getDataFromFirebaseDatabase();
+                            dialog.cancel();
+                        }else {
+                            showMessage(task.getException().getMessage());
+                            progressDialog.cancel();
+                        }
+                    }
+                });
+
 
                 showPointsOnRecyclerView();
 
@@ -186,26 +230,42 @@ public class MindsetActivity extends AppCompatActivity {
     private void showPointsOnRecyclerView() {
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-        PointsAdapter adapter = new PointsAdapter(MindsetActivity.this, list);
+        PointsAdapter adapter = new PointsAdapter(MindsetActivity.this, list,"mindset","mindset");
         mRecyclerView.setAdapter(adapter);
 
     }
 
     public void UploadDataClick(View view) {
 
+        showProgressDialog();
         title = mTxtTitle.getText().toString().trim();
         description = mTxtDesription.getText().toString().trim();
 
-
-        boolean result = UploadMindSetData.uploadMindSetData(title, description,
-                "mindset", "mindset", list, imageUri+"");
-
-        if (result = true){
-            Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
-            finish();
-        }else {
-            Toast.makeText(this, "Failure Occurred", Toast.LENGTH_SHORT).show();
+        if (title.isEmpty()) {
+            mTxtTitle.setError("Required");
+            mTxtTitle.requestFocus();
+            return;
         }
+
+        Map map = new HashMap();
+        map.put("title", title);
+        map.put("image_url", imageUri+"");
+        map.put("description", description);
+
+        documentReference.update(map).addOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete(@NonNull Task task) {
+                if (task.isSuccessful()){
+                    showMessage("Data Saved");
+                    progressDialog.cancel();
+                }else {
+                    showMessage(task.getException().getMessage());
+                    progressDialog.cancel();
+                }
+            }
+        });
+
+
 
     }
 
@@ -226,6 +286,7 @@ public class MindsetActivity extends AppCompatActivity {
                 imageUri = result.getUri();
                 Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
                 bgImage.setImageURI(imageUri);
+                uploadVideoToFirebaseFirestore(imageUri);
 
             } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
                 Exception error = result.getError();
@@ -233,4 +294,70 @@ public class MindsetActivity extends AppCompatActivity {
         }
 
     }
+
+    private void uploadVideoToFirebaseFirestore(Uri videoUri) {
+
+        showProgressDialog();
+
+        final StorageReference ref = storageReference.child("mindset");
+        UploadTask uploadTask = ref.putFile(imageUri);
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return ref.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadUrl = task.getResult().toString();
+
+
+                    Map map = new HashMap();
+                    map.put("image_url", downloadUrl);
+                    map.put("title", mTxtTitle.getText().toString());
+                    map.put("description",description);
+
+                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                        @Override
+                        public void onComplete(@NonNull Task task) {
+                            if (task.isSuccessful()){
+                                showMessage("Image Uploaded");
+                                progressDialog.cancel();
+                            }else {
+                                showMessage(task.getException().getMessage());
+                                progressDialog.cancel();
+                            }
+                        }
+                    });
+
+
+                } else {
+                    showMessage(task.getException().getMessage());
+                    progressDialog.cancel();
+                }
+            }
+        });
+
+    }
+
+
+    private void showProgressDialog(){
+        progressDialog.setTitle("Please Wait...");
+        progressDialog.setMessage("Uploading data in progress.");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+    }
+
+    private void showMessage(String message){
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+
 }

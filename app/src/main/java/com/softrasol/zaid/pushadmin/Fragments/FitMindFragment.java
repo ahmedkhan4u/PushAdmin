@@ -23,9 +23,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.softrasol.zaid.pushadmin.MeditationActivity;
 import com.softrasol.zaid.pushadmin.MindsetActivity;
-import com.softrasol.zaid.pushadmin.MotivationActivity;
 import com.softrasol.zaid.pushadmin.R;
-import com.softrasol.zaid.pushadmin.BreathworkActivity;
+import com.softrasol.zaid.pushadmin.UploadVideoActivity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -181,7 +180,12 @@ public class FitMindFragment extends Fragment {
         mMotivation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(), MotivationActivity.class));
+
+                Intent intent = new Intent(getActivity(), UploadVideoActivity.class);
+                intent.putExtra("video_category", "motivation");
+                intent.putExtra("toolbar_title", "Motivation");
+                startActivity(intent);
+
             }
         });
 
@@ -191,7 +195,11 @@ public class FitMindFragment extends Fragment {
         mBreathout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(), BreathworkActivity.class));
+                Intent intent = new Intent(getActivity(), UploadVideoActivity.class);
+                intent.putExtra("video_category", "breath_work");
+                intent.putExtra("toolbar_title", "Breathwork");
+                startActivity(intent);
+
             }
         });
     }

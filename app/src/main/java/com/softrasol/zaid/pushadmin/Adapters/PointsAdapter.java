@@ -19,8 +19,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
 import com.softrasol.zaid.pushadmin.R;
+import com.softrasol.zaid.pushadmin.UploadVideoActivity;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,11 +34,23 @@ public class PointsAdapter extends RecyclerView.Adapter<PointsAdapter.ViewHolder
     private Context context;
     private List<PointsModel> list;
 
+
     AlertDialog alert11;
 
-    public PointsAdapter(Context context, List<PointsModel> list) {
+    String category_name;
+
+    CollectionReference collectionReference;
+    DocumentReference documentReference;
+
+
+    public PointsAdapter(Context context, List<PointsModel> list, String collectionName , String category_name) {
         this.context = context;
         this.list = list;
+        this.category_name = category_name;
+
+        collectionReference = FirebaseFirestore.getInstance().collection(collectionName);
+        documentReference = collectionReference.document(category_name);
+
     }
 
     @NonNull
@@ -72,10 +87,28 @@ public class PointsAdapter extends RecyclerView.Adapter<PointsAdapter.ViewHolder
                         "Yes",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
+
+                                CollectionReference collectionReference1 = documentReference
+                                        .collection("points_data");
+
+                                DocumentReference documentReference1 = collectionReference1.document(model.getId());
+
+                                documentReference1.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (task.isSuccessful()){
+                                            Toast.makeText(context, "Data Deleted", Toast.LENGTH_SHORT).show();
+                                            notifyDataSetChanged();
+                                            UploadVideoActivity obj = new UploadVideoActivity();
+
+
+
+                                        }
+                                    }
+                                });
+
                                 dialog.cancel();
-                                list.remove(position);
-                                Toast.makeText(context, "item deleted at index "+position , Toast.LENGTH_SHORT).show();
-                                refreshView(position);
+
                             }
                         });
 
@@ -96,7 +129,7 @@ public class PointsAdapter extends RecyclerView.Adapter<PointsAdapter.ViewHolder
 
     }
 
-    private void editData(final ViewHolder holder, PointsModel model, final int position) {
+    private void editData(final ViewHolder holder, final PointsModel model, final int position) {
 
 
 
@@ -146,6 +179,26 @@ public class PointsAdapter extends RecyclerView.Adapter<PointsAdapter.ViewHolder
 
                 PointsModel model1 = new PointsModel(title, description);
                 list.set(position, model1);
+
+                Map map = new HashMap();
+                map.put("title", title);
+                map.put("sub_title", description);
+
+                CollectionReference collectionReference1 = documentReference
+                        .collection("points_data");
+
+                DocumentReference documentReference1 = collectionReference1.document(model.getId());
+
+                documentReference1.update(map).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()){
+                            Toast.makeText(context, "Data Saved", Toast.LENGTH_SHORT).show();
+                            notifyDataSetChanged();
+
+                        }
+                    }
+                });
 
                 alert11.cancel();
                 refreshView(position);

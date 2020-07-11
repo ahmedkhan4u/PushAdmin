@@ -1,5 +1,6 @@
 package com.softrasol.zaid.pushadmin;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -14,8 +15,18 @@ import android.widget.MediaController;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.softrasol.zaid.pushadmin.Helper.UploadMeditationData;
+import com.softrasol.zaid.pushadmin.Model.PointsModel;
+import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
@@ -46,9 +57,58 @@ public class MeditationActivity extends AppCompatActivity {
 
         implementSpinner();
 
+    }
 
+    private void getDataFromFirebaseDatabase(String cat) {
+
+        CollectionReference collectionReference = FirebaseFirestore.getInstance()
+                .collection("meditation");
+        final DocumentReference documentReference = collectionReference
+                .document(category);
+
+        documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()){
+                    if (task.getResult().exists()){
+
+                        if (task.getResult().contains("title")){
+                            title = task.getResult().getString("title");
+                            mTxtTitle.setText(title);
+                        }
+
+                        if (task.getResult().contains("image_url")){
+
+                            try {
+
+                                imageUri = Uri.parse(task.getResult().getString("image_url"));
+
+                            }catch (Exception ex){
+                            }
+
+                        }
+
+                        if (task.getResult().contains("audio_url")){
+                            audioUri = Uri.parse(task.getResult().getString("audio_url"));
+                        }
+
+                        if (task.getResult().contains("category")){
+                            category = task.getResult().getString("category");
+                        }
+
+
+                        if (task.getResult().contains("description")){
+                            description = task.getResult().getString("description");
+                            mTxtDescription.setText(description);
+                        }
+
+                    }
+                }
+            }
+        });
 
     }
+
 
     private void implementSpinner() {
 
@@ -61,6 +121,8 @@ public class MeditationActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 category = list[position];
+
+                getDataFromFirebaseDatabase(category);
             }
 
             @Override
@@ -205,7 +267,6 @@ public class MeditationActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mediaPlayer.start();
     }
 
     @Override

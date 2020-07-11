@@ -21,11 +21,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.softrasol.zaid.pushadmin.ChallengesActivity;
-import com.softrasol.zaid.pushadmin.ExerciseActivity;
-import com.softrasol.zaid.pushadmin.MobilityActivity;
 import com.softrasol.zaid.pushadmin.NutritionActivity;
 import com.softrasol.zaid.pushadmin.R;
+import com.softrasol.zaid.pushadmin.UploadVideoActivity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,7 +89,12 @@ public class FitBodyFragment extends Fragment {
         mExercise.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(), ExerciseActivity.class));
+
+                Intent intent = new Intent(getActivity(), UploadVideoActivity.class);
+                intent.putExtra("video_category", "exercise");
+                intent.putExtra("toolbar_title", "Workout");
+                startActivity(intent);
+
             }
         });
     }
@@ -100,7 +103,12 @@ public class FitBodyFragment extends Fragment {
         mChallenges.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(), ChallengesActivity.class));
+
+                Intent intent = new Intent(getActivity(), UploadVideoActivity.class);
+                intent.putExtra("video_category", "challenges");
+                intent.putExtra("toolbar_title", "Challenges");
+                startActivity(intent);
+
             }
         });
     }
@@ -109,7 +117,11 @@ public class FitBodyFragment extends Fragment {
         mMobility.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(), MobilityActivity.class));
+
+                Intent intent = new Intent(getActivity(), UploadVideoActivity.class);
+                intent.putExtra("video_category", "mobility");
+                intent.putExtra("toolbar_title", "Mobility");
+                startActivity(intent);
             }
         });
     }

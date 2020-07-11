@@ -113,7 +113,23 @@
                 android:layout_marginHorizontal="16dp"
                 android:layout_height="36dp"
                 android:layout_centerHorizontal="true"
+                android:background="@drawable/btn_bg"
+                android:text="Save Data"
                 android:layout_marginTop="24dp"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:id="@+id/btn_edit_text"
+                android:layout_gravity="center_horizontal"
+                android:onClick="UploadDataClick"
+                />
+
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_marginHorizontal="16dp"
+                android:layout_height="36dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/btn_bg"
                 android:text="Choose Background Image"
                 android:textAllCaps="false"
@@ -137,23 +153,6 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="16dp"
                 android:onClick="AddNoteClick"
-                />
-
-
-
-            <Button
-                android:layout_width="match_parent"
-                android:layout_marginHorizontal="16dp"
-                android:layout_height="36dp"
-                android:layout_centerHorizontal="true"
-                android:background="@drawable/btn_bg"
-                android:text="Save Data"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:id="@+id/btn_edit_text"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
-                android:onClick="UploadDataClick"
                 />
 
             <androidx.recyclerview.widget.RecyclerView

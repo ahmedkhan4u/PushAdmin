@@ -3,6 +3,7 @@ package com.softrasol.zaid.pushadmin;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -15,6 +16,7 @@ import android.widget.MediaController;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
@@ -24,6 +26,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.softrasol.zaid.pushadmin.Helper.UploadMeditationData;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
 import com.squareup.picasso.Picasso;
@@ -31,6 +36,8 @@ import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MeditationActivity extends AppCompatActivity {
 
@@ -43,6 +50,10 @@ public class MeditationActivity extends AppCompatActivity {
     private String category;
     private Uri imageUri;
 
+    private String downloadAudioUrl, downloadImageUrl;
+
+    private ProgressDialog progressDialog;
+
     private String []list = {"Choose Category","Wise", "Happiness", "Health"};
 
     @Override
@@ -54,6 +65,8 @@ public class MeditationActivity extends AppCompatActivity {
         mTxtDescription = findViewById(R.id.txt_meditation_description);
         mSpinner = findViewById(R.id.spinner_meditation);
         mediaPlayer = new MediaPlayer();
+
+        progressDialog = new ProgressDialog(this);
 
         implementSpinner();
 
@@ -82,6 +95,8 @@ public class MeditationActivity extends AppCompatActivity {
                             try {
 
                                 imageUri = Uri.parse(task.getResult().getString("image_url"));
+                                downloadImageUrl = task.getResult().getString("image_url");
+
 
                             }catch (Exception ex){
                             }
@@ -90,6 +105,7 @@ public class MeditationActivity extends AppCompatActivity {
 
                         if (task.getResult().contains("audio_url")){
                             audioUri = Uri.parse(task.getResult().getString("audio_url"));
+                            downloadAudioUrl = task.getResult().getString("audio_url");
                         }
 
                         if (task.getResult().contains("category")){
@@ -135,45 +151,42 @@ public class MeditationActivity extends AppCompatActivity {
 
     public void SaveMeditationData(View view) {
 
+        showProgressDialog();
+
         title = mTxtTitle.getText().toString().trim();
         description = mTxtDescription.getText().toString().trim();
 
-        if (title.isEmpty()){
-            mTxtTitle.setError("Title too short");
-            mTxtTitle.requestFocus();
-            return;
-        }
 
-        if (description.isEmpty()){
-            mTxtDescription.setError("Description too short");
-            mTxtDescription.requestFocus();
-            return;
-        }
-
-        if (audioUri == null){
-            Toast.makeText(this, "Kindly choose an audio file", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         if (category.equalsIgnoreCase("Choose Category")){
             Toast.makeText(this, "Kindly choose a category", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (imageUri == null){
-            Toast.makeText(this, "Kindly choose background image", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        CollectionReference collectionReference = FirebaseFirestore.getInstance()
+                .collection("meditation");
 
-        boolean result = UploadMeditationData.uploadMeditationData(title, description,
-                audioUri+"", category ,category, imageUri+"");
+        final DocumentReference documentReference = collectionReference.document(category);
 
-        if (result = true){
-            Toast.makeText(this, "Data Uploaded", Toast.LENGTH_SHORT).show();
-            finish();
-        }else {
-            Toast.makeText(this, "Failure Occurred", Toast.LENGTH_SHORT).show();
-        }
+        Map map = new HashMap();
+        map.put("audio_url", downloadAudioUrl+"");
+        map.put("title", title);
+        map.put("description",description);
+        map.put("category", category);
+        map.put("image_url", downloadImageUrl+"");
+
+        documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete(@NonNull Task task) {
+                if (task.isSuccessful()){
+                    showMessage("Data Saved");
+                    progressDialog.cancel();
+                }else {
+                    showMessage(task.getException().getMessage());
+                    progressDialog.cancel();
+                }
+            }
+        });
 
     }
 
@@ -188,10 +201,17 @@ public class MeditationActivity extends AppCompatActivity {
 
     private void pickAudioFromGallary() {
 
+
+        if (category.equalsIgnoreCase("Choose Category")){
+            showMessage("Kindly Choose Category First");
+            return;
+        }
+
         Intent intent = new Intent();
         intent.setType("audio/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent,"Select Audio"),1);
+
 
     }
 
@@ -202,6 +222,7 @@ public class MeditationActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 audioUri = data.getData();
                 Toast.makeText(this, "Audio Choosed", Toast.LENGTH_SHORT).show();
+                uploadAudioToFirebaseFirestore(audioUri);
             }
         }
 
@@ -210,6 +231,7 @@ public class MeditationActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 imageUri = result.getUri();
                 Toast.makeText(this, "Image Choosed", Toast.LENGTH_SHORT).show();
+                uploadImageToFirebaseFirestore(imageUri);
 
             } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
                 Exception error = result.getError();
@@ -246,6 +268,11 @@ public class MeditationActivity extends AppCompatActivity {
 
     public void ChooseBgImage(View view) {
 
+        if (category.equalsIgnoreCase("Choose Category")){
+            showMessage("Kindly Choose Category First");
+            return;
+        }
+
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
                 .setAspectRatio(2,3)
@@ -273,5 +300,146 @@ public class MeditationActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         mediaPlayer.stop();
+    }
+
+    private void uploadAudioToFirebaseFirestore(final Uri uri) {
+
+        if (category.equalsIgnoreCase("Choose Category")){
+            return;
+        }
+
+        showProgressDialog();
+
+        StorageReference storageReference = FirebaseStorage.getInstance()
+                .getReference("audio");
+        final StorageReference ref = storageReference.child("meditation_"+category);
+        UploadTask uploadTask = ref.putFile(uri);
+
+        CollectionReference collectionReference = FirebaseFirestore.getInstance()
+                .collection("meditation");
+
+        final DocumentReference documentReference = collectionReference.document(category);
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return ref.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadAudioUrl = task.getResult().toString();
+
+
+                    Map map = new HashMap();
+                    map.put("audio_url", downloadAudioUrl+"");
+                    map.put("title", title);
+                    map.put("description",description);
+                    map.put("category", category);
+                    map.put("image_url", downloadImageUrl+"");
+
+                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                        @Override
+                        public void onComplete(@NonNull Task task) {
+                            if (task.isSuccessful()){
+                                showMessage("Audio Uploaded");
+                                progressDialog.cancel();
+                            }else {
+                                showMessage(task.getException().getMessage());
+                                progressDialog.cancel();
+                            }
+                        }
+                    });
+
+
+                } else {
+                    showMessage(task.getException().getMessage());
+                    progressDialog.cancel();
+                }
+            }
+        });
+
+    }
+
+    private void uploadImageToFirebaseFirestore(final Uri uri) {
+
+
+        showProgressDialog();
+
+        StorageReference storageReference = FirebaseStorage.getInstance()
+                .getReference("Images");
+        final StorageReference ref = storageReference.child("meditation_"+category);
+        UploadTask uploadTask = ref.putFile(uri);
+
+        CollectionReference collectionReference = FirebaseFirestore.getInstance()
+                .collection("meditation");
+
+        final DocumentReference documentReference = collectionReference.document(category);
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return ref.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadImageUrl = task.getResult().toString();
+
+
+                    Map map = new HashMap();
+                    map.put("audio_url", downloadAudioUrl+"");
+                    map.put("title", title);
+                    map.put("description",description);
+                    map.put("category", category);
+                    map.put("image_url", downloadImageUrl+"");
+
+                    documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
+                        @Override
+                        public void onComplete(@NonNull Task task) {
+                            if (task.isSuccessful()){
+                                showMessage("Image Uploaded");
+                                progressDialog.cancel();
+                            }else {
+                                showMessage(task.getException().getMessage());
+                                progressDialog.cancel();
+                            }
+                        }
+                    });
+
+
+                } else {
+                    showMessage(task.getException().getMessage());
+                    progressDialog.cancel();
+                }
+            }
+        });
+
+    }
+
+
+
+
+    private void showProgressDialog(){
+        progressDialog.setTitle("Please Wait...");
+        progressDialog.setMessage("Uploading data in progress.");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+    }
+
+    private void showMessage(String message){
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 }

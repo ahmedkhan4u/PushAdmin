@@ -1,11 +1,19 @@
 package com.softrasol.zaid.pushadmin;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +27,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
@@ -35,11 +45,13 @@ import com.softrasol.zaid.pushadmin.Adapters.PointsAdapter;
 import com.softrasol.zaid.pushadmin.Helper.FileUtils;
 import com.softrasol.zaid.pushadmin.Helper.UploadVideoData;
 import com.softrasol.zaid.pushadmin.Model.PointsModel;
+import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 import net.vrgsoft.videcrop.VideoCropActivity;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,6 +70,7 @@ public class UploadVideoActivity extends AppCompatActivity {
     private String outputPath = "/storage/emulated/0/" + System.currentTimeMillis() + ".mp4";
     private String inputPath;
 
+    private ImageView imgThumbnail;
     String video_category, toolbar_title;
 
     private Toolbar toolbar;
@@ -70,6 +83,9 @@ public class UploadVideoActivity extends AppCompatActivity {
     CollectionReference collectionReference;
     DocumentReference documentReference;
     StorageReference storageReference;
+
+    String thumbDownloadUrl;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +104,7 @@ public class UploadVideoActivity extends AppCompatActivity {
         toolbarInitialization();
         widgetsInitailization();
         getDataFromFirebaseDatabase();
+
 
     }
 
@@ -126,6 +143,12 @@ public class UploadVideoActivity extends AppCompatActivity {
                             mBreathOutVideo.start();
                             MediaController mediaController = new MediaController(UploadVideoActivity.this);
                             mBreathOutVideo.setMediaController(mediaController);
+                        }
+
+                        if (task.getResult().contains("thumbnailUrl")){
+                            thumbDownloadUrl = task.getResult().getString("thumbnailUrl");
+                            Picasso.get().load(thumbDownloadUrl)
+                                    .into(imgThumbnail);
                         }
 
 
@@ -176,6 +199,7 @@ public class UploadVideoActivity extends AppCompatActivity {
         mBreathOutVideo = findViewById(R.id.video_view);
         mRecyclerView = findViewById(R.id.recyclerview);
         mTxtTitle = findViewById(R.id.txt_breathwork_title);
+        imgThumbnail = findViewById(R.id.thumbnail);
     }
 
     public void BackClick(View view) {
@@ -193,7 +217,20 @@ public class UploadVideoActivity extends AppCompatActivity {
                 MediaController mediaController = new MediaController(UploadVideoActivity.this);
                 mBreathOutVideo.setMediaController(mediaController);
                 inputPath = FileUtils.getPath(UploadVideoActivity.this, videoUri);
+                //String path = getRealPathFromURI(videoUri);
 
+
+                //Thumbnail
+
+                Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(inputPath,
+                        MediaStore.Video.Thumbnails.MINI_KIND);
+
+
+
+                Uri imageUri = getImageUri(getApplicationContext(), bitmap);
+
+                imgThumbnail.setImageURI(imageUri);
+                saveImageBitmapToStorage(imageUri);
                 startActivityForResult(VideoCropActivity.createIntent(this, inputPath, outputPath), CROP_REQUEST);
             }
         }
@@ -219,9 +256,48 @@ public class UploadVideoActivity extends AppCompatActivity {
             Uri uri = Uri.parse(videoUri + "");
             mBreathOutVideo.setVideoURI(uri);
             mBreathOutVideo.start();
+            imgThumbnail.setVisibility(View.GONE);
             MediaController mediaController = new MediaController(UploadVideoActivity.this);
             mBreathOutVideo.setMediaController(mediaController);
         }
+    }
+
+    private void saveImageBitmapToStorage(Uri imageUri) {
+
+
+        final StorageReference storageReference = FirebaseStorage.getInstance()
+                .getReference("thumbnail");
+
+        final StorageReference ref = storageReference.child(video_category);
+
+        UploadTask uploadTask = ref.putFile(imageUri);
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return ref.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    thumbDownloadUrl = task.getResult().toString();
+
+                    final Map map = new HashMap();
+                    map.put("thumbnailUrl", thumbDownloadUrl);
+
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+
     }
 
     private void uploadVideoToFirebaseFirestore(Uri videoUri) {
@@ -251,6 +327,7 @@ public class UploadVideoActivity extends AppCompatActivity {
                     Map map = new HashMap();
                     map.put("video_url", downloadUrl);
                     map.put("title", title);
+                    map.put("thumbnailUrl", thumbDownloadUrl);
 
                     documentReference.set(map).addOnCompleteListener(new OnCompleteListener() {
                         @Override
@@ -373,6 +450,7 @@ public class UploadVideoActivity extends AppCompatActivity {
         Map map = new HashMap();
         map.put("title", title);
         map.put("video_url", videoUri+"");
+        map.put("thumbnailUrl", thumbDownloadUrl);
         documentReference.update(map).addOnCompleteListener(new OnCompleteListener() {
             @Override
             public void onComplete(@NonNull Task task) {
@@ -392,12 +470,19 @@ public class UploadVideoActivity extends AppCompatActivity {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
-
     private void showProgressDialog(){
         progressDialog.setTitle("Please Wait...");
         progressDialog.setMessage("Uploading data in progress.");
         progressDialog.setCancelable(false);
         progressDialog.show();
+    }
+
+    public Uri getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(),
+                inImage, "Title", null);
+        return Uri.parse(path);
     }
 
 }

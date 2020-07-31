@@ -151,7 +151,6 @@ public class EditFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 CropImage.activity()
-                        .setAspectRatio(1,1)
                         .start(getContext(), EditFragment.this);
             }
         });

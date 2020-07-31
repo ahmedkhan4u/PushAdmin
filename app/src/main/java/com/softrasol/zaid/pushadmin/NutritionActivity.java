@@ -271,7 +271,6 @@ public class NutritionActivity extends AppCompatActivity {
 
         CropImage.activity()
                 .setGuidelines(CropImageView.Guidelines.ON)
-                .setAspectRatio(2,3)
                 .start(NutritionActivity.this);
     }
 
